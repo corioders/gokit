@@ -1,0 +1,8 @@
+# env
+.env
+
+# mac
+.DS_Store
+
+# debugging
+__debug_bin
