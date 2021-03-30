@@ -1,6 +1,7 @@
 package rand
 
 import (
+	cryptorrand "crypto/rand"
 	"io"
 	mathrand "math/rand"
 	"unsafe"
@@ -14,6 +15,11 @@ type Rand struct {
 
 func New(source io.Reader) *Rand {
 	return &Rand{source}
+}
+
+// NewCrypto is short for New("crypto/rand".Reader)
+func NewCrypto() *Rand {
+	return &Rand{cryptorrand.Reader}
 }
 
 func NewFromMath(source mathrand.Source) *Rand {
