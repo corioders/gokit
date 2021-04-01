@@ -20,6 +20,10 @@ type Role struct {
 	ri *roleInternal
 }
 
+var (
+	ErrNilPermission = errors.New("Nil permission pointer was passeed")
+)
+
 type roleJson struct {
 	Name        string `json:"n"`
 	ManagerName string `json:"mn"`
@@ -44,16 +48,16 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 		return errors.WithStack(err)
 	}
 
-	role, err := manager.RoleFromName(rrj.Name)
-	if err != nil {
-		return errors.WithStack(err)
+	role, ok := manager.getRole(rrj.Name)
+	if !ok {
+		return errors.WithMessage(ErrRoleNotExists, fmt.Sprintf(`role name: "%v"`, rrj.Name))
 	}
 
 	r.ri = role.ri
 	return nil
 }
 
-func newRole(name, managerName string, permissions ...*Permission) *roleInternal {
+func newRole(name, managerName string, permissions ...*Permission) (*roleInternal, error) {
 	ri := &roleInternal{
 		name:        name,
 		managerName: managerName,
@@ -63,21 +67,28 @@ func newRole(name, managerName string, permissions ...*Permission) *roleInternal
 	}
 
 	for _, permission := range permissions {
+		if permission == nil {
+			return nil, errors.WithStack(ErrNilPermission)
+		}
 		ri.permissions[permission.name] = permission
 	}
 
-	return ri
+	return ri, nil
 }
 
 // NewRole creates new role, name must be unique across one RoleManager.
 // NewRole return error if name is non unique.
 func (rm *RoleManager) NewRole(name string, permissions ...*Permission) (*Role, error) {
-	ri := newRole(name, rm.name, permissions...)
+	ri, err := newRole(name, rm.name, permissions...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	role := &Role{
 		ri: ri,
 	}
 
-	err := rm.insertRole(role)
+	err = rm.insertRole(role)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -95,34 +106,40 @@ func (rm *RoleManager) MustNewRole(name string, permissions ...*Permission) *Rol
 	return role
 }
 
-// RoleFromName returns role associated with given name.
-// RoleFromName return error if role with given name does not exists.
-// Note that role which is marshaled as json is the same as role's name.
-func (rm *RoleManager) RoleFromName(name string) (*Role, error) {
-	role, ok := rm.getRole(name)
-	if !ok {
-		return nil, errors.WithMessage(ErrRoleNotExists, fmt.Sprintf(`role name "%v"`, name))
+// Allow a permission to the role.
+// Allow panics if any of permissions is nil.
+func (r *Role) Allow(permissions ...*Permission) {
+	r.ri.rwmu.Lock()
+	for _, permission := range permissions {
+		if permission == nil {
+			r.ri.rwmu.Unlock()
+			panic(errors.WithStack(ErrNilPermission))
+		}
+		r.ri.permissions[permission.name] = permission
 	}
-
-	return role, nil
-}
-
-// Assign a permission to the role.
-func (r *Role) Allow(p *Permission) {
-	r.ri.rwmu.Lock()
-	r.ri.permissions[p.name] = p
 	r.ri.rwmu.Unlock()
 }
 
-// Revoke the specific permission.
-func (r *Role) Disallow(p *Permission) {
+// Disallow the specific permission.
+// Disallow panics if any of permissions is nil.
+func (r *Role) Disallow(permissions ...*Permission) {
 	r.ri.rwmu.Lock()
-	delete(r.ri.permissions, p.name)
+	for _, permission := range permissions {
+		if permission == nil {
+			r.ri.rwmu.Unlock()
+			panic(errors.WithStack(ErrNilPermission))
+		}
+		delete(r.ri.permissions, permission.name)
+	}
 	r.ri.rwmu.Unlock()
 }
 
-// Permit returns true if the role has specific permission.
+// IsAllowedTo returns true if the role has specific permission.
+// IsAllowedTo panics if p is nil.
 func (r *Role) IsAllowedTo(p *Permission) bool {
+	if p == nil {
+		panic(errors.WithStack(ErrNilPermission))
+	}
 	found := false
 	r.ri.rwmu.RLock()
 	for _, rp := range r.ri.permissions {
