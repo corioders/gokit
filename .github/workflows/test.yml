@@ -3,7 +3,7 @@ name: Tests
 on: pull_request
 
 jobs:
-  Build-test:
+  Vet-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -37,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install dependencies and Build app
+      - name: Install dependencies and Run vet
         run: |
           go vet ./...
 
