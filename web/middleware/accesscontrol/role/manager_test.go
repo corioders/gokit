@@ -12,7 +12,7 @@ func TestNewManager(t *testing.T) {
 		m1, err := NewManager("TestNewManager, roleManager, number of iterations " + strconv.Itoa(i))
 		_ = m1
 		if err != nil {
-			t.Fatalf("Error while creating new roleManager, iteration: %v error: %v", i, err)
+			t.Fatalf("Expected no error while creating new roleManager, but on iteration: %v, got error: %v", i, err)
 		}
 	}
 

@@ -11,7 +11,7 @@ import (
 func TestDirectJson(t *testing.T) {
 	roleManager, err := role.NewManager("TestDirectJson, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	normalPermission, err := roleManager.NewPermission("TestDirectJson, permission, normal premissions")
@@ -56,7 +56,7 @@ func TestEmbeddedJson(t *testing.T) {
 
 	roleManager, err := role.NewManager("TestEmbeddedJson, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	normalPermission, err := roleManager.NewPermission("TestEmbeddedJson, permission, normal premissions")
@@ -97,29 +97,33 @@ func TestEmbeddedJson(t *testing.T) {
 }
 
 func TestBrokenJson(t *testing.T) {
-	wrongManagerName := []byte(`{"n":"TestBrokenJson, role, not existing role","mn":"TestBrokenJson, roleManager, not existing roleManager"}`)
-	err := json.Unmarshal(wrongManagerName, &role.Role{})
-	if err == nil {
-		t.Fatal("Expected error when unmarshaling broken role json")
-	}
+	t.Run("WrongManagerName", func(t *testing.T) {
+		brokenJson := []byte(`{"n":"TestBrokenJson, role, not existing role","mn":"TestBrokenJson, roleManager, not existing roleManager"}`)
+		err := json.Unmarshal(brokenJson, &role.Role{})
+		if err == nil {
+			t.Fatal("Expected error when unmarshaling broken role json")
+		}
+	
+		if !errors.Is(err, role.ErrRoleManagerNotExists) {
+			t.Fatal("Expected ErrRoleManagerNotExists when unmarshaling broken role json, and roleManager name is invalid")
+		}	
+	})
 
-	if !errors.Is(err, role.ErrRoleManagerNotExists) {
-		t.Fatal("Expected ErrRoleManagerNotExists when unmarshaling broken role json, and roleManager name is invalid")
-	}
-
-	roleManager, err := role.NewManager("TestBrokenJson, roleManager, number 1")
-	_ = roleManager
-	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
-	}
-
-	wrongRoleName := []byte(`{"n":"TestBrokenJson, role, not existing role","mn":"TestBrokenJson, roleManager, number 1"}`)
-	err = json.Unmarshal(wrongRoleName, &role.Role{})
-	if err == nil {
-		t.Fatal("Expected error when unmarshaling broken role json")
-	}
-
-	if !errors.Is(err, role.ErrRoleNotExists) {
-		t.Fatal("Expected ErrRoleNotExists when unmarshaling broken role json, and roleManager name is valid and role name is invalid")
-	}
+	t.Run("WrongRoleName", func(t *testing.T) {
+		roleManager, err := role.NewManager("TestBrokenJson, roleManager, number 1")
+		_ = roleManager
+		if err != nil {
+			t.Fatalf("Error while creating new roleManager, error: %v", err)
+		}
+	
+		brokenJson := []byte(`{"n":"TestBrokenJson, role, not existing role","mn":"TestBrokenJson, roleManager, number 1"}`)
+		err = json.Unmarshal(brokenJson, &role.Role{})
+		if err == nil {
+			t.Fatal("Expected error when unmarshaling broken role json")
+		}
+	
+		if !errors.Is(err, role.ErrRoleNotExists) {
+			t.Fatal("Expected ErrRoleNotExists when unmarshaling broken role json, and roleManager name is valid and role name is invalid")
+		}
+	})
 }

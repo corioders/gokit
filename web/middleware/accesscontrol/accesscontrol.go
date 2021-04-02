@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -14,11 +15,14 @@ import (
 
 type ctxKey int
 
+// GetClaims runs json.Unmarshal(claimsData, v), so v must be a pointer
+type GetClaims func(v interface{}) error
+
 const (
-	CtxKeyClaims ctxKey = iota
+	CtxKeyGetClaims ctxKey = iota
 )
 
-var accessDeniedStatusCode = http.StatusForbidden
+var statusAccessDenied = http.StatusForbidden
 
 var accesscontrolNames = &sync.Map{}
 
@@ -35,8 +39,24 @@ type Accesscontrol struct {
 }
 
 type internalClaims struct {
-	UserClaims interface{} `json:"uc"`
-	Role       *role.Role  `json:"ro"`
+	UserClaims *userClaims `json:"uc,omitempty"`
+	Role       *role.Role  `json:"ro,omitempty"`
+}
+
+type userClaims struct {
+	value         interface{}
+	unmarshalData []byte
+}
+
+// UnmarshalJSON implements Unmarshaler interface.
+func (uc *userClaims) UnmarshalJSON(data []byte) error {
+	uc.unmarshalData = data
+	return nil
+}
+
+// MarshalJSON implements Marshaler interface.
+func (uc *userClaims) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uc.value)
 }
 
 var (
@@ -72,11 +92,11 @@ func New(name string, key Key) (*Accesscontrol, error) {
 			jose.HeaderContentType: jose.ContentType("JWT"),
 		},
 	})
-
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
+	accesscontrolNames.Store(name, struct{}{})
 	return &Accesscontrol{
 		key:             key,
 		tokenCookieName: hash.Sha256Base64UrlSafe([]byte(name)),

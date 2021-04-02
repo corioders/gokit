@@ -17,7 +17,7 @@ func TestNewPermission(t *testing.T) {
 		p1, err := roleManager.NewPermission("TestNewPermission, permission, number of iterations " + strconv.Itoa(i))
 		_ = p1
 		if err != nil {
-			t.Fatalf("Error while creating new permission, iteration: %v error: %v", i, err)
+			t.Fatalf("Expected no error while creating new permission, but on iteration: %v, got error: %v", i, err)
 		}
 	}
 

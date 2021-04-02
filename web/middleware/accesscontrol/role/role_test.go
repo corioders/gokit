@@ -10,14 +10,14 @@ import (
 func TestNewRole(t *testing.T) {
 	roleManager, err := NewManager("TestNewRole, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	for i := 0; i < 10; i++ {
 		r1, err := roleManager.NewRole("TestNewRole, role, number of iterations " + strconv.Itoa(i))
 		_ = r1
 		if err != nil {
-			t.Fatalf("Error while creating new role, iteration: %v error: %v", i, err)
+			t.Fatalf("Expected no error while creating new role, but on iteration: %v, got error: %v", i, err)
 		}
 	}
 
@@ -51,22 +51,22 @@ func TestNewRole(t *testing.T) {
 func TestIsAllowedTo(t *testing.T) {
 	roleManager, err := NewManager("TestIsAllowedTo, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	p1, err := roleManager.NewPermission("TestIsAllowedTo, permission, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	p2, err := roleManager.NewPermission("TestIsAllowedTo, permission, number 2")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	r1, err := roleManager.NewRole("TestIsAllowedTo, role, number 1", p1)
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	if !r1.IsAllowedTo(p1) {
@@ -79,7 +79,7 @@ func TestIsAllowedTo(t *testing.T) {
 
 	r2, err := roleManager.NewRole("TestIsAllowedTo, role, number 2", p1, p2)
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	if !r2.IsAllowedTo(p1) {
@@ -103,7 +103,7 @@ func TestIsAllowedTo(t *testing.T) {
 			}
 
 			if !errors.Is(err, ErrNilPermission) {
-				t.Fatal("Expected error ErrNilPermission when nil permission passed to IsAllowedTo")
+				t.Fatal("Expected ErrNilPermission when nil permission passed to IsAllowedTo")
 			}
 		}()
 
@@ -114,22 +114,22 @@ func TestIsAllowedTo(t *testing.T) {
 func TestAllow(t *testing.T) {
 	roleManager, err := NewManager("TestAllow, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	p1, err := roleManager.NewPermission("TestAllow, permission, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	p2, err := roleManager.NewPermission("TestAllow, permission, number 2")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	r1, err := roleManager.NewRole("TestAllow, role, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	r1.Allow(p1)
@@ -154,7 +154,7 @@ func TestAllow(t *testing.T) {
 			}
 
 			if !errors.Is(err, ErrNilPermission) {
-				t.Fatal("Expected error ErrNilPermission when nil permission passed to Allow")
+				t.Fatal("Expected ErrNilPermission when nil permission passed to Allow")
 			}
 		}()
 
@@ -163,7 +163,7 @@ func TestAllow(t *testing.T) {
 
 	r2, err := roleManager.NewRole("TestAllow, role, number 2")
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	r2.Allow(p1)
@@ -180,22 +180,22 @@ func TestAllow(t *testing.T) {
 func TestDisallow(t *testing.T) {
 	roleManager, err := NewManager("TestDisallow, roleManager, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new roleManager, error: %e", err)
+		t.Fatalf("Error while creating new roleManager, error: %v", err)
 	}
 
 	p1, err := roleManager.NewPermission("TestDisallow, permission, number 1")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	p2, err := roleManager.NewPermission("TestDisallow, permission, number 2")
 	if err != nil {
-		t.Fatalf("Error while creating new permission error: %e", err)
+		t.Fatalf("Error while creating new permission error: %v", err)
 	}
 
 	r1, err := roleManager.NewRole("TestDisallow, role, number 1", p1, p2)
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	r1.Disallow(p2)
@@ -220,7 +220,7 @@ func TestDisallow(t *testing.T) {
 			}
 
 			if !errors.Is(err, ErrNilPermission) {
-				t.Fatal("Expected error ErrNilPermission when nil permission passed to Disallow")
+				t.Fatal("Expected ErrNilPermission when nil permission passed to Disallow")
 			}
 		}()
 
@@ -229,7 +229,7 @@ func TestDisallow(t *testing.T) {
 
 	r2, err := roleManager.NewRole("TestDisallow, role, number 2", p1, p2)
 	if err != nil {
-		t.Fatalf("Error while creating new role, error: %e", err)
+		t.Fatalf("Error while creating new role, error: %v", err)
 	}
 
 	r2.Disallow(p1)

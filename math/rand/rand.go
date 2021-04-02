@@ -22,8 +22,8 @@ func NewCrypto() *Rand {
 	return &Rand{cryptorrand.Reader}
 }
 
-func NewFromMath(source mathrand.Source) *Rand {
-	return &Rand{mathrand.New(source)}
+func NewMath(seed int64) *Rand {
+	return &Rand{mathrand.New(mathrand.NewSource(seed))}
 }
 
 func (r *Rand) Read(p []byte) (n int, err error) {
