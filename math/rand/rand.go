@@ -1,6 +1,7 @@
 package rand
 
 import (
+	cryptorrand "crypto/rand"
 	"io"
 	mathrand "math/rand"
 	"unsafe"
@@ -16,8 +17,13 @@ func New(source io.Reader) *Rand {
 	return &Rand{source}
 }
 
-func NewFromMath(source mathrand.Source) *Rand {
-	return &Rand{mathrand.New(source)}
+// NewCrypto is short for New("crypto/rand".Reader)
+func NewCrypto() *Rand {
+	return &Rand{cryptorrand.Reader}
+}
+
+func NewMath(seed int64) *Rand {
+	return &Rand{mathrand.New(mathrand.NewSource(seed))}
 }
 
 func (r *Rand) Read(p []byte) (n int, err error) {

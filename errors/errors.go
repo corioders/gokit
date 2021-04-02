@@ -16,22 +16,21 @@ func (e *internalError) Error() string {
 
 func (e *internalError) error(withStack bool) string {
 	var str string
-	if e.message != "" {
-		str += e.message
-
-		if e.wrappedErr != nil {
-			str += constant.Delimer
-		}
-	}
-
 	if e.wrappedErr != nil {
 		if wrappedErr, ok := e.wrappedErr.(*internalError); ok {
 			str += wrappedErr.error(false)
 		} else {
 			str += e.wrappedErr.Error()
 		}
+
+		if e.message != "" {
+			str += constant.Delimer
+		}
 	}
 
+	if e.message != "" {
+		str += e.message
+	}
 	if withStack && e.stack != nil {
 		str += "\n" + e.stack.String()
 	}

@@ -58,6 +58,12 @@ func (crw *compressionResponseWriter) Write(b []byte) (int, error) {
 func Compression() web.Middleware {
 	return func(handler web.Handler) web.Handler {
 		return func(ctx context.Context, rw http.ResponseWriter, r *http.Request) error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
 			if r.Header.Get("upgrade") != "" {
 				return handler(ctx, rw, r)
 			}

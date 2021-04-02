@@ -43,8 +43,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("math", func(t *testing.T) {
-		sourceMathReader := mathrand.NewSource(0)
-		randMath := NewFromMath(sourceMathReader)
+		randMath := NewMath(0)
 
 		if _, ok := randMath.source.(*mathrand.Rand); !ok {
 			t.Fatal("Expected randMath.source to be of type math/rand.*Rand")
