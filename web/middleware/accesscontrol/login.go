@@ -2,7 +2,6 @@ package accesscontrol
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/corioders/gokit/errors"
@@ -37,7 +36,6 @@ func (ac *Accesscontrol) NewLogin(lah LoginAcceptHandler, options ...loginOption
 		}
 
 		claims, roleGranted, shouldLogin, err := lah(ctx, r)
-		fmt.Println(claims)
 		if err != nil {
 			return errors.WithStack(err)
 		}
