@@ -12,7 +12,7 @@ func (o *SetupTelemetryOptions) validate() error {
 	return o.TraceExporter.validate()
 }
 
-func StartTelemetry(app application.StopHandler, options *SetupTelemetryOptions) error {
+func StartTelemetry(sr application.StopRegistrar, options *SetupTelemetryOptions) error {
 	err := options.validate()
 	if err != nil {
 		return err
@@ -21,7 +21,7 @@ func StartTelemetry(app application.StopHandler, options *SetupTelemetryOptions)
 	switch options.TraceExporter.ExporeterType {
 	case TraceExpoterJaeger:
 		flush, err := StartJaegerTracing(options.ServiceName, options.TraceExporter.CollectorEndpoint)
-		app.StopFunc("Flush jaeger tracing exporter", func() error {
+		sr.RegisterOnStop("Flush jaeger tracing exporter", func() error {
 			flush()
 			return nil
 		})

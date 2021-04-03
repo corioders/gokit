@@ -2,8 +2,8 @@ package application
 
 import "fmt"
 
-type StopHandler interface {
-	StopFunc(name string, fn stopFunc)
+type StopRegistrar interface {
+	RegisterOnStop(name string, fn stopFunc)
 }
 
 type stopFunc func() error
@@ -12,19 +12,19 @@ type stopHandler struct {
 	name string
 }
 
-// StopFunc registers function that should be executed when application is stopping
-func (a *Application) StopFunc(name string, fn stopFunc) {
-	a.stopFuncsMu.Lock()
-	defer a.stopFuncsMu.Unlock()
-	a.stopHandlers = append(a.stopHandlers, stopHandler{name: name, fn: fn})
+// RegisterOnStop registers function that should be executed when application is stopping.
+func (a *Application) RegisterOnStop(name string, fn stopFunc) {
+	a.onStopMu.Lock()
+	defer a.onStopMu.Unlock()
+	a.onStop = append(a.onStop, stopHandler{name: name, fn: fn})
 }
 
 func (a *Application) Stop() error {
 	a.logger.Info("Stopping...")
 
-	a.stopFuncsMu.Lock()
-	defer a.stopFuncsMu.Unlock()
-	for _, handler := range a.stopHandlers {
+	a.onStopMu.Lock()
+	defer a.onStopMu.Unlock()
+	for _, handler := range a.onStop {
 		a.logger.Info(fmt.Sprintf("Stopping %s...", handler.name))
 
 		err := handler.fn()

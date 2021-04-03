@@ -15,7 +15,7 @@ func TestStop(t *testing.T) {
 	t.Run("no error", func(t *testing.T) {
 
 		stopFuncCalled := false
-		application.StopFunc("stopTest", func() error {
+		application.RegisterOnStop("stopTest", func() error {
 			stopFuncCalled = true
 			return nil
 		})
@@ -37,7 +37,7 @@ func TestStop(t *testing.T) {
 	t.Run("with error", func(t *testing.T) {
 		expectedErr := fmt.Errorf("test error")
 
-		application.StopFunc("stopTest", func() error {
+		application.RegisterOnStop("stopTest", func() error {
 			return expectedErr
 		})
 

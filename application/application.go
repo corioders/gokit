@@ -9,16 +9,16 @@ import (
 type Application struct {
 	logger log.Logger
 
-	stopHandlers []stopHandler
-	stopFuncsMu  sync.Mutex
+	onStop []stopHandler
+	onStopMu  sync.Mutex
 }
 
 func New(logger log.Logger) *Application {
 	return &Application{
 		logger: logger,
 
-		stopHandlers: make([]stopHandler, 0),
-		stopFuncsMu:  sync.Mutex{},
+		onStop: make([]stopHandler, 0),
+		onStopMu:  sync.Mutex{},
 	}
 }
 
