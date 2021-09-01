@@ -8,17 +8,14 @@ import (
 	"github.com/dimfeld/httptreemux"
 )
 
-type Router interface {
-	http.Handler
-	Handle(method string, path string, handler Handler, middleware ...Middleware)
-	HandleAll(path string, handler Handler, middleware ...Middleware)
-	NewGroup(path string, middleware ...Middleware) RouterGroup
-}
-
 type RouterGroup interface {
 	Handle(method string, path string, handler Handler, middleware ...Middleware)
 	HandleAll(path string, handler Handler, middleware ...Middleware)
 	NewGroup(path string, middleware ...Middleware) RouterGroup
+}
+type Router interface {
+	RouterGroup
+	http.Handler
 }
 
 type internalRouter struct {
@@ -44,7 +41,7 @@ func (ir *internalRouter) Handle(method string, path string, handler Handler, mi
 
 // HandleAll registers handler on specified path and all of http methods
 func (ir *internalRouter) HandleAll(path string, handler Handler, middleware ...Middleware) {
-	handleAll(ir, path, handler, middleware)
+	handleAll(ir.router, ir.logger, path, handler, ir.middleware, middleware)
 }
 
 func (wr *internalRouter) NewGroup(path string, middleware ...Middleware) RouterGroup {
@@ -79,7 +76,7 @@ func (ig *internalGroup) Handle(method string, path string, handler Handler, mid
 
 // HandleAll registers handler on specified path and all of http methods
 func (ig *internalGroup) HandleAll(path string, handler Handler, middleware ...Middleware) {
-	handleAll(ig, path, handler, middleware)
+	handleAll(ig.group, ig.logger, path, handler, ig.middleware, middleware)
 }
 
 func (ig *internalGroup) NewGroup(path string, middleware ...Middleware) RouterGroup {
@@ -87,11 +84,11 @@ func (ig *internalGroup) NewGroup(path string, middleware ...Middleware) RouterG
 	return newInternalGroup(ig.logger, path, group, middleware...)
 }
 
-type handlerAsHandlerFunc interface {
+type router interface {
 	Handle(method, path string, handler http.HandlerFunc)
 }
 
-func handle(object handlerAsHandlerFunc, logger log.Logger, method string, path string, handler Handler, generalMiddleware, specificMiddleware []Middleware) {
+func handle(r router, logger log.Logger, method string, path string, handler Handler, generalMiddleware, specificMiddleware []Middleware) {
 	// First wrap handler specific middleware around this handler.
 	handler = wrapMiddleware(specificMiddleware, handler)
 
@@ -107,21 +104,17 @@ func handle(object handlerAsHandlerFunc, logger log.Logger, method string, path 
 		}
 	}
 
-	object.Handle(method, path, h)
+	r.Handle(method, path, h)
 }
 
-type handlerAsWebHandler interface {
-	Handle(method, path string, handler Handler, middleware ...Middleware)
-}
-
-func handleAll(object handlerAsWebHandler, path string, handler Handler, middleware []Middleware) {
-	object.Handle("GET", path, handler, middleware...)
-	object.Handle("HEAD", path, handler, middleware...)
-	object.Handle("POST", path, handler, middleware...)
-	object.Handle("PUT", path, handler, middleware...)
-	object.Handle("DELETE", path, handler, middleware...)
-	object.Handle("CONNECT", path, handler, middleware...)
-	object.Handle("OPTIONS", path, handler, middleware...)
-	object.Handle("TRACE", path, handler, middleware...)
-	object.Handle("PATCH", path, handler, middleware...)
+func handleAll(r router, logger log.Logger, path string, handler Handler, generalMiddleware, specificMiddleware []Middleware) {
+	handle(r, logger, http.MethodGet, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodHead, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodPost, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodPut, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodPatch, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodDelete, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodConnect, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodOptions, path, handler, generalMiddleware, specificMiddleware)
+	handle(r, logger, http.MethodTrace, path, handler, generalMiddleware, specificMiddleware)
 }
